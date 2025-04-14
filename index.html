@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Quiz Global con Ranking</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #4facfe, #00f2fe);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      color: #333;
+    }
+    .quiz-container {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      max-width: 700px;
+      width: 90%;
+      margin-top: 20px;
+      text-align: center;
+    }
+    .option {
+      background: #e0e0e0;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .option:hover {
+      background: #ccc;
+    }
+    .correct { background: #a5d6a7 !important; }
+    .wrong { background: #ef9a9a !important; }
+    #next-btn, #restart-btn {
+      margin-top: 15px;
+      padding: 10px 20px;
+      font-size: 1em;
+      border: none;
+      background: #42a5f5;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    #restart-btn {
+      background: #4caf50;
+    }
+    #player-name {
+      display: none;
+      margin-top: 15px;
+      padding: 10px;
+      width: 70%;
+      border-radius: 6px;
+      border: 1px solid #aaa;
+    }
+    .score {
+      margin-top: 15px;
+      font-size: 1.2em;
+    }
+    #ranking {
+      margin-top: 20px;
+      padding: 15px;
+      background: white;
+      border-radius: 12px;
+      max-width: 700px;
+      width: 90%;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+
+<div id="ranking">
+  <h2>Ranking Global</h2>
+  <div id="ranking-list">Cargando...</div>
+</div>
+
+<div class="quiz-container">
+  <h1>Quiz de HTML</h1>
+  <select id="topic-select">
+      <option value="">-- Selecciona un tema --</option>
+      <option value="html">HTML</option>
+      <option value="css">CSS</option>
+      <option value="js">JavaScript</option>
+    </select>
+    
+  <div class="question" id="question"></div>
+  <div id="options"></div>
+  <input type="text" id="player-name" placeholder="Tu nombre" />
+  <div class="score" id="score"></div>
+  <button id="next-btn">Siguiente</button>
+  <button id="restart-btn">Reiniciar</button>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+  import { getDatabase, ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAuLNZ53jgv14qxJJk5villVs4QxpcWQNU",
+    authDomain: "quiz-global-46bd2.firebaseapp.com",
+    projectId: "quiz-global-46bd2",
+    storageBucket: "quiz-global-46bd2.firebasestorage.app",
+    messagingSenderId: "369087542360",
+    appId: "1:369087542360:web:2a68ede87099cc8f9e862d",
+    measurementId: "G-NC0MCD1ZNJ"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  const quizzes = {
+      html: [
+        { question: "¿Qué significa HTML?", options: ["Hyper Text Markup Language", "High Text Machine Language", "Hyperlinks and Text Mark Language"], answer: 0 },
+        { question: "¿Cuál es la etiqueta correcta para un párrafo?", options: ["<par>", "<p>", "<text>"], answer: 1 },
+        { question: "¿Qué etiqueta se usa para insertar una imagen?", options: ["<img>", "<image>", "<pic>"], answer: 0 },
+        { question: "¿Cuál es la etiqueta para crear un enlace?", options: ["<a>", "<link>", "<href>"], answer: 0 },
+        { question: "¿Qué atributo define el destino de un enlace?", options: ["src", "href", "link"], answer: 1 },
+        { question: "¿Qué etiqueta se usa para encabezados de nivel 1?", options: ["<head1>", "<h1>", "<heading>"], answer: 1 },
+        { question: "¿Qué atributo se usa para una descripción emergente?", options: ["tooltip", "alt", "title"], answer: 2 },
+        { question: "¿Qué etiqueta agrupa contenido?", options: ["<div>", "<span>", "<group>"], answer: 0 },
+        { question: "¿Qué etiqueta se usa para listas ordenadas?", options: ["<ul>", "<ol>", "<li>"], answer: 1 },
+        { question: "¿Cuál no es una etiqueta válida de HTML?", options: ["<table>", "<section>", "<slide>"], answer: 2 },
+        { question: "¿Qué etiqueta representa una celda en una tabla?", options: ["<td>", "<tr>", "<cell>"], answer: 0 },
+        { question: "¿Para qué sirve la etiqueta <br>?", options: ["Hacer negrita", "Salto de línea", "Insertar imagen"], answer: 1 },
+        { question: "¿Qué etiqueta sirve para insertar video?", options: ["<media>", "<video>", "<movie>"], answer: 1 },
+        { question: "¿Qué atributo especifica el texto alternativo de una imagen?", options: ["alt", "src", "title"], answer: 0 },
+        { question: "¿Qué etiqueta contiene metadatos?", options: ["<meta>", "<data>", "<info>"], answer: 0 },
+        { question: "¿Qué etiqueta representa contenido resaltado?", options: ["<strong>", "<highlight>", "<mark>"], answer: 2 },
+        { question: "¿Qué etiqueta se usa para formulario?", options: ["<form>", "<input>", "<submit>"], answer: 0 },
+        { question: "¿Qué etiqueta crea una lista desordenada?", options: ["<ol>", "<list>", "<ul>"], answer: 2 },
+        { question: "¿Qué etiqueta sirve para comentarios en HTML?", options: ["<!-- comentario -->", "// comentario", "# comentario"], answer: 0 },
+        { question: "¿Cuál es la raíz de un documento HTML?", options: ["<html>", "<head>", "<body>"], answer: 0 }
+      ],
+      css: [
+        { question: "¿Qué significa CSS?", options: ["Creative Style System", "Cascading Style Sheets", "Computer Style Structure"], answer: 1 },
+        { question: "¿Cuál es la forma correcta de aplicar un color de fondo rojo?", options: ["color: red;", "bgcolor: red;", "background-color: red;"], answer: 2 },
+        { question: "¿Cómo se aplica una clase en CSS?", options: [".clase { }", "#clase { }", "*clase { }"], answer: 0 },
+        { question: "¿Cómo se aplica un ID en CSS?", options: [".id { }", "#id { }", "*id { }"], answer: 1 },
+        { question: "¿Qué propiedad cambia el tamaño del texto?", options: ["font-style", "font-size", "text-size"], answer: 1 },
+        { question: "¿Cómo se hace un texto en negrita?", options: ["font-weight: bold;", "text-style: bold;", "font-bold: true;"], answer: 0 },
+        { question: "¿Qué propiedad controla el espaciado entre líneas?", options: ["line-spacing", "spacing", "line-height"], answer: 2 },
+        { question: "¿Cómo se centra un texto?", options: ["text-align: middle;", "align: center;", "text-align: center;"], answer: 2 },
+        { question: "¿Qué unidad es relativa al tamaño de fuente?", options: ["px", "em", "cm"], answer: 1 },
+        { question: "¿Qué selector selecciona todos los elementos <p> dentro de un div?", options: ["div p", "div > p", "div.p"], answer: 0 },
+        { question: "¿Cómo se aplica un borde?", options: ["border: 1px solid black;", "outline: 1px solid black;", "stroke: 1px black;"], answer: 0 },
+        { question: "¿Qué propiedad hace que un elemento sea flexible?", options: ["display: block;", "display: flex;", "flexible: true;"], answer: 1 },
+        { question: "¿Cuál es la propiedad para sombra de texto?", options: ["text-shadow", "font-shadow", "shadow-text"], answer: 0 },
+        { question: "¿Cómo se aplica un fondo con imagen?", options: ["background-image: url('img.jpg');", "img-background: 'img.jpg';", "background: image('img.jpg');"], answer: 0 },
+        { question: "¿Qué propiedad cambia el estilo de fuente?", options: ["font-style", "text-style", "style-font"], answer: 0 },
+        { question: "¿Cuál es la forma correcta de aplicar márgenes?", options: ["margin: 10px;", "margins: 10px;", "spacing: 10px;"], answer: 0 },
+        { question: "¿Qué propiedad ajusta el espacio interior de un elemento?", options: ["spacing", "padding", "margin-inside"], answer: 1 },
+        { question: "¿Cómo se seleccionan todos los elementos?", options: ["*", "#", "."], answer: 0 },
+        { question: "¿Qué valor hace que un elemento no se muestre?", options: ["display: hide;", "visibility: hidden;", "display: none;"], answer: 2 },
+        { question: "Cuál propiedad define una animación?", options: ["@transition", "@animation", "@keyframes"], answer: 2 }
+      ],
+      js: [
+        { question: "¿Cómo se declara una variable en JavaScript?", options: ["var nombre;", "variable nombre;", "let nombre;"], answer: 0 },
+        { question: "¿Cuál es el método para escribir en la consola de JavaScript?", options: ["console.write()", "console.print()", "console.log()"], answer: 2 },
+        { question: "¿Cómo se define una función en JavaScript?", options: ["function myFunction()", "def myFunction()", "func myFunction()"], answer: 0 },
+        { question: "¿Cuál es el operador para asignar valores en JavaScript?", options: ["=", "==", "==="], answer: 0 },
+        { question: "¿Qué tipo de dato es 'true' en JavaScript?", options: ["Boolean", "String", "Number"], answer: 0 },
+        { question: "¿Cómo se crea un objeto en JavaScript?", options: ["let obj = {}", "let obj = []", "let obj = ()"], answer: 0 },
+        { question: "¿Qué método se usa para agregar un elemento al final de un array?", options: ["push()", "add()", "insert()"], answer: 0 },
+        { question: "¿Cómo se define un comentario de una sola línea en JavaScript?", options: ["// comentario", "# comentario", "<!-- comentario -->"], answer: 0 },
+        { question: "¿Cómo se declara una constante en JavaScript?", options: ["const nombre;", "let nombre;", "var nombre;"], answer: 0 },
+        { question: "¿Qué hace el operador '==' en JavaScript?", options: ["Compara valores", "Compara valores y tipos", "Asigna valores"], answer: 0 },
+        { question: "¿Cómo puedes convertir una cadena de texto a número en JavaScript?", options: ["parseInt()", "parseFloat()", "convert()"], answer: 0 },
+        { question: "¿Cómo se accede a un elemento de un array?", options: ["array[0]", "array{0}", "array(0)"], answer: 0 },
+        { question: "¿Qué operador se usa para comparar valores y tipos en JavaScript?", options: ["==", "=", "==="], answer: 2 },
+        { question: "¿Cómo se hace un bucle 'for' en JavaScript?", options: ["for(i=0; i<5; i++) {}", "for(i:0; i<5; i++) {}", "for i in range(5): {}"], answer: 0 },
+        { question: "¿Qué función devuelve la longitud de un string?", options: ["length()", "size()", "length"], answer: 0 },
+        { question: "¿Cómo se transforma un string en minúsculas en JavaScript?", options: ["string.lower()", "string.toLowerCase()", "string.lowercase()"], answer: 1 },
+        { question: "¿Qué método se usa para eliminar el último elemento de un array?", options: ["pop()", "shift()", "remove()"], answer: 0 },
+        { question: "¿Cómo se convierte un valor a string en JavaScript?", options: ["String()", "toString()", "parseString()"], answer: 0 },
+        { question: "¿Qué es un 'callback' en JavaScript?", options: ["Una función que se pasa como argumento a otra", "Una variable", "Un tipo de error"], answer: 0 },
+        { question: "¿Cómo se accede a una propiedad de un objeto?", options: ["obj.propiedad", "obj[propiedad]", "obj->propiedad"], answer: 0 }
+      ]
+    };
+
+  let currentQuestion = 0;
+  let score = 0;
+
+  const questionEl = document.getElementById("question");
+  const optionsEl = document.getElementById("options");
+  const nextBtn = document.getElementById("next-btn");
+  const restartBtn = document.getElementById("restart-btn");
+  const scoreEl = document.getElementById("score");
+  const nameInput = document.getElementById("player-name");
+
+  function showQuestion() {
+    const q = preguntas[currentQuestion];
+    questionEl.textContent = q.question;
+    optionsEl.innerHTML = "";
+    q.options.forEach((opt, i) => {
+      const div = document.createElement("div");
+      div.className = "option";
+      div.textContent = opt;
+      div.addEventListener("click", () => selectOption(div, i === q.answer));
+      optionsEl.appendChild(div);
+    });
+    nextBtn.style.display = "none";
+  }
+
+  function selectOption(element, isCorrect) {
+    const allOptions = document.querySelectorAll(".option");
+    allOptions.forEach(opt => opt.style.pointerEvents = "none");
+    if (isCorrect) {
+      element.classList.add("correct");
+      score++;
+    } else {
+      element.classList.add("wrong");
+      allOptions[preguntas[currentQuestion].answer].classList.add("correct");
+    }
+    nextBtn.style.display = "inline-block";
+  }
+
+  nextBtn.addEventListener("click", () => {
+    currentQuestion++;
+    if (currentQuestion < preguntas.length) {
+      showQuestion();
+    } else {
+      questionEl.textContent = "¡Quiz terminado!";
+      optionsEl.innerHTML = "";
+      nextBtn.style.display = "none";
+      nameInput.style.display = "block";
+      restartBtn.style.display = "inline-block";
+      scoreEl.textContent = `Tu puntaje final es: ${score} de ${preguntas.length}`;
+    }
+  });
+
+  restartBtn.addEventListener("click", () => {
+    const name = nameInput.value || "Anónimo";
+    const data = { nombre: name, puntos: score };
+    push(ref(db, 'ranking/'), data);
+    score = 0;
+    currentQuestion = 0;
+    nameInput.style.display = "none";
+    restartBtn.style.display = "none";
+    scoreEl.textContent = "";
+    nameInput.value = "";
+    showQuestion();
+    cargarRanking();
+  });
+
+  function cargarRanking() {
+    const lista = document.getElementById("ranking-list");
+    onValue(ref(db, 'ranking/'), snapshot => {
+      const data = snapshot.val() || {};
+      const jugadores = Object.values(data).sort((a, b) => b.puntos - a.puntos).slice(0, 10);
+      lista.innerHTML = jugadores.map((j, i) =>
+        `<div>${i + 1}. <strong>${j.nombre}</strong> - ${j.puntos} pts</div>`
+      ).join("");
+    });
+  }
+
+  showQuestion();
+  cargarRanking();
+</script>
+
+</body>
+</html>
